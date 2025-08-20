@@ -10,6 +10,17 @@ provider:
     APPOINTMENT_TABLE: ${self:service}-appointments-${sls:stage}
 
 functions:
+  getAppointmentsByInsuredId:
+    handler: src/infrastructure/lambdas/getAppointmentsByInsuredId.handler
+    events:
+      - http:
+          path: appointments
+          method: get
+          request:
+            parameters:
+              querystrings:
+                insuredId: true
+                
   appointment:
     handler: src/infrastructure/lambdas/appointment.handler
     events:

@@ -26,4 +26,12 @@ export class MySqlAppointmentRepository implements AppointmentSqlRepository {
       ]
     );
   }
+
+  async findByInsuredId(insuredId: string): Promise<Appointment[]> {
+    const [rows] = await pool.query(
+      "SELECT * FROM appointments WHERE insuredId = ?",
+      [insuredId]
+    );
+    return rows as Appointment[];
+  }
 }
