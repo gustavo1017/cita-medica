@@ -1,0 +1,24 @@
+{
+  "name": "citamedica",
+  "version": "1.0.0",
+  "description": "Agendamiento de citas medicas",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gustavo1017/cita-medica.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gustavo1017/cita-medica/issues"
+  },
+  "homepage": "https://github.com/gustavo1017/cita-medica#readme",
+  "devDependencies": {
+    "serverless-offline": "^14.4.0",
+    "typescript": "^5.9.2"
+  }
+}
