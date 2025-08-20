@@ -1,9 +1,11 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { AppointmentRepositoryDynamo } from "../dynamodb/AppointmentRepositoryDynamo";
 import { CreateAppointmentService } from "../../application/CreateAppointmentService";
+import { SqsMessagePublisher } from "../sqs/SqsMessagePublisher";
 
 const repository = new AppointmentRepositoryDynamo();
-const service = new CreateAppointmentService(repository);
+const sqs = new SqsMessagePublisher();
+const service = new CreateAppointmentService(repository, sqs);
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
