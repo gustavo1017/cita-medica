@@ -15,6 +15,18 @@ functions:
 
 resources:
   Resources:
+  # Dynamo DB
+    AppointmentTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.APPOINTMENT_TABLE}
+        AttributeDefinitions:
+          - AttributeName: "id"
+            AttributeType: "S"
+        KeySchema:
+          - AttributeName: "id"
+            KeyType: "HASH"
+        BillingMode: PAY_PER_REQUEST
     # API Gateway HTTP API
     AppointmentHttpApi:
       Type: AWS::ApiGatewayV2::Api
