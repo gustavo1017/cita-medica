@@ -1,5 +1,4 @@
 service: cita-medica
-
 frameworkVersion: "3"
 
 provider:
@@ -20,13 +19,31 @@ functions:
             parameters:
               querystrings:
                 insuredId: true
-                
+          documentation:
+            summary: "Obtener citas por insuredId"
+            description: "Retorna todas las citas registradas en RDS filtradas por insuredId"
+            requestModels:
+              "application/json": GetAppointmentsRequest
+            methodResponses:
+              - statusCode: "200"
+                responseModels:
+                  "application/json": GetAppointmentsResponse
+
   appointment:
     handler: src/infrastructure/lambdas/appointment.handler
     events:
       - http:
           path: appointment
           method: post
+          documentation:
+            summary: "Crear cita médica"
+            description: "Registra una cita en DynamoDB y la envía a la cola SQS correspondiente"
+            requestModels:
+              "application/json": AppointmentRequest
+            methodResponses:
+              - statusCode: "201"
+                responseModels:
+                  "application/json": AppointmentResponse
       - sqs:
           arn:
             Fn::GetAtt:
@@ -37,7 +54,7 @@ functions:
             Fn::GetAtt:
               - SqsClQueue
               - Arn
-    
+
   appointmentPe:
     handler: src/infrastructure/lambdas/appointmentpe.handler
     events:
@@ -56,68 +73,50 @@ functions:
               - SqsClQueue
               - Arn
 
-resources:
-  Resources:
-  # SQS PE
-    SqsPeQueue:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: SQS_PE
+custom:
+  documentation:
+    api:
+      info:
+        version: "1.0.0"
+        title: "Cita Médica API"
+        description: "API para gestionar citas médicas en Perú y Chile"
+    models:
+      - name: GetAppointmentsRequest
+        contentType: "application/json"
+        schema:
+          type: object
+          properties:
+            insuredId:
+              type: string
+              example: "00001"
+      - name: GetAppointmentsResponse
+        contentType: "application/json"
+        schema:
+          type: object
+          properties:
+            appointments:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: { type: string }
+                  scheduleId: { type: integer }
+                  countryISO: { type: string }
+      - name: AppointmentRequest
+        contentType: "application/json"
+        schema:
+          type: object
+          properties:
+            insuredId: { type: string }
+            scheduleId: { type: integer }
+            countryISO: { type: string }
+      - name: AppointmentResponse
+        contentType: "application/json"
+        schema:
+          type: object
+          properties:
+            id: { type: string }
+            status: { type: string }
 
-  # SQS CL
-    SqsClQueue:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: SQS_CL
-  # Dynamo DB
-    AppointmentTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:provider.environment.APPOINTMENT_TABLE}
-        AttributeDefinitions:
-          - AttributeName: "id"
-            AttributeType: "S"
-        KeySchema:
-          - AttributeName: "id"
-            KeyType: "HASH"
-        BillingMode: PAY_PER_REQUEST
-    # API Gateway HTTP API
-    AppointmentHttpApi:
-      Type: AWS::ApiGatewayV2::Api
-      Properties:
-        Name: AppointmentApi
-        ProtocolType: HTTP
-
-    # Integración Lambda <-> API Gateway
-    AppointmentIntegration:
-      Type: AWS::ApiGatewayV2::Integration
-      Properties:
-        ApiId: !Ref AppointmentHttpApi
-        IntegrationType: AWS_PROXY
-        IntegrationUri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AppointmentLambdaFunction.Arn}/invocations
-        PayloadFormatVersion: "2.0"
-
-    # Route (POST /appointment)
-    AppointmentRoute:
-      Type: AWS::ApiGatewayV2::Route
-      Properties:
-        ApiId: !Ref AppointmentHttpApi
-        RouteKey: POST /appointment
-        Target: !Join [ "/", ["integrations", !Ref AppointmentIntegration] ]
-
-    # Stage (deploy de la API)
-    AppointmentStage:
-      Type: AWS::ApiGatewayV2::Stage
-      Properties:
-        ApiId: !Ref AppointmentHttpApi
-        StageName: dev
-        AutoDeploy: true
-
-    # Permiso para que API Gateway invoque la Lambda
-    AppointmentLambdaPermission:
-      Type: AWS::Lambda::Permission
-      Properties:
-        Action: lambda:InvokeFunction
-        FunctionName: !Ref AppointmentLambdaFunction
-        Principal: apigateway.amazonaws.com
+plugins:
+  - serverless-openapi-documentation
