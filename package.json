@@ -4,7 +4,8 @@
   "description": "Agendamiento de citas medicas",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "repository": {
     "type": "git",
@@ -19,8 +20,11 @@
   "homepage": "https://github.com/gustavo1017/cita-medica#readme",
   "devDependencies": {
     "@types/aws-lambda": "^8.10.152",
+    "@types/jest": "^30.0.0",
     "@types/node": "^24.3.0",
+    "jest": "^30.0.5",
     "serverless-offline": "^14.4.0",
+    "ts-jest": "^29.4.1",
     "typescript": "^5.9.2"
   },
   "dependencies": {
