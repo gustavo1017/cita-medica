@@ -1,0 +1,57 @@
+service: cita-medica
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    APPOINTMENT_TABLE: ${self:service}-appointments-${sls:stage}
+
+functions:
+  appointment:
+    handler: src/infrastructure/lambdas/appointment.handler
+
+resources:
+  Resources:
+    # API Gateway HTTP API
+    AppointmentHttpApi:
+      Type: AWS::ApiGatewayV2::Api
+      Properties:
+        Name: AppointmentApi
+        ProtocolType: HTTP
+
+    # Integración Lambda <-> API Gateway
+    AppointmentIntegration:
+      Type: AWS::ApiGatewayV2::Integration
+      Properties:
+        ApiId: !Ref AppointmentHttpApi
+        IntegrationType: AWS_PROXY
+        IntegrationUri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AppointmentLambdaFunction.Arn}/invocations
+        PayloadFormatVersion: "2.0"
+
+    # Route (POST /appointment)
+    AppointmentRoute:
+      Type: AWS::ApiGatewayV2::Route
+      Properties:
+        ApiId: !Ref AppointmentHttpApi
+        RouteKey: POST /appointment
+        Target: !Join [ "/", ["integrations", !Ref AppointmentIntegration] ]
+
+    # Stage (deploy de la API)
+    AppointmentStage:
+      Type: AWS::ApiGatewayV2::Stage
+      Properties:
+        ApiId: !Ref AppointmentHttpApi
+        StageName: dev
+        AutoDeploy: true
+
+    # Permiso para que API Gateway invoque la Lambda
+    AppointmentLambdaPermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref AppointmentLambdaFunction
+        Principal: apigateway.amazonaws.com
