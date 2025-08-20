@@ -1,6 +1,7 @@
 import { v4 as uuid } from "uuid";
 import { Appointment } from "../domain/Appointment";
 import { AppointmentRepository } from "../domain/AppointmentRepository";
+import { MessagePublisher } from "../domain/MessagePublisher";
 
 interface CreateAppointmentRequest {
   insuredId: string;
@@ -9,7 +10,9 @@ interface CreateAppointmentRequest {
 }
 
 export class CreateAppointmentService {
-  constructor(private repository: AppointmentRepository) {}
+  constructor(private readonly repository: AppointmentRepository,
+    private readonly publisher: MessagePublisher
+  ) {}
 
   async execute(request: CreateAppointmentRequest): Promise<Appointment> {
     const appointment: Appointment = {
@@ -21,6 +24,7 @@ export class CreateAppointmentService {
     };
 
     await this.repository.save(appointment);
+    await this.publisher.publish(appointment, request.countryISO);
     return appointment;
   }
 }
