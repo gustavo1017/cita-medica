@@ -12,9 +12,52 @@ provider:
 functions:
   appointment:
     handler: src/infrastructure/lambdas/appointment.handler
+    events:
+      - http:
+          path: appointment
+          method: post
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - SqsPeQueue
+              - Arn
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - SqsClQueue
+              - Arn
+    
+  appointmentPe:
+    handler: src/infrastructure/lambdas/appointmentpe.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - SqsPeQueue
+              - Arn
+
+  appointmentCl:
+    handler: src/infrastructure/lambdas/appointmentcl.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - SqsClQueue
+              - Arn
 
 resources:
   Resources:
+  # SQS PE
+    SqsPeQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: SQS_PE
+
+  # SQS CL
+    SqsClQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: SQS_CL
   # Dynamo DB
     AppointmentTable:
       Type: AWS::DynamoDB::Table
